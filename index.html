@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deer Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: #e0e0e0;
+    background: #0a0a0a;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+    padding: 2rem 0;
+    text-align: center;
+    border-bottom: 2px solid #00ff88;
+    box-shadow: 0 4px 20px rgba(0, 255, 136, 0.1);
+}
+
+header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #00ff88;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+header p {
+    font-size: 1.2rem;
+    color: #b0b0b0;
+}
+
+main {
+    padding: 2rem 0;
+}
+
+section {
+    background: #111;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #222;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+section h2 {
+    color: #00ff88;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #222;
+    padding-bottom: 0.5rem;
+}
+
+#map {
+    height: 500px;
+    border-radius: 8px;
+    border: 2px solid #00ff88;
+    margin-bottom: 1rem;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.map-info {
+    color: #888;
+    font-style: italic;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    color: #00ff88;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #222;
+    border-radius: 8px;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+input::placeholder, textarea::placeholder {
+    color: #666;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.radio-group {
+    display: flex;
+    gap: 2rem;
+    margin-top: 0.5rem;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e0e0e0;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+    width: auto;
+    margin: 0;
+}
+
+.btn-primary {
+    background: #00ff88;
+    color: #0a0a0a;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background: #00cc66;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #00ff88;
+    border: 2px solid #00ff88;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #00ff88;
+    color: #0a0a0a;
+}
+
+.form-note {
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Subscription Section */
+.subscription-section p {
+    color: #b0b0b0;
+    margin-bottom: 1.5rem;
+}
+
+.privacy-note {
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+/* Footer */
+footer {
+    background: #111;
+    padding: 2rem 0;
+    text-align: center;
+    border-top: 2px solid #222;
+    margin-top: 3rem;
+}
+
+footer p {
+    color: #666;
+}
+
+/* Alert Messages */
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.alert-success {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid #00ff88;
+    color: #00ff88;
+}
+
+.alert-error {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid #ff4444;
+    color: #ff4444;
+}
+
+/* Monkey Mode Styles */
+.map-menu {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+}
+
+.monkey-mode-btn {
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff88;
+    border: 2px solid #00ff88;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.monkey-mode-btn:hover {
+    background: rgba(0, 255, 136, 0.15);
+}
+
+#monkey-controls {
+    background: #0f0f0f;
+    border: 2px solid #00ff88;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+#monkey-info {
+    margin-bottom: 1rem;
+}
+
+#monkey-counter {
+    color: #00ff88;
+    font-weight: 800;
+}
+
+.monkey-instruction {
+    color: #b0b0b0;
+    font-size: 0.95rem;
+}
+
+#rotation-indicator {
+    background: rgba(0, 255, 136, 0.12);
+    border: 1px solid #00ff88;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    color: #00ff88;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2.2rem;
+    }
+
+    .radio-group {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    section {
+        padding: 1.5rem;
+    }
+
+    #map {
+        height: 400px;
+    }
+}
+</style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🦌 Deer Tracker</h1>
+            <p>Real-time deer sighting locations</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Map Section -->
+        <section class="map-section">
+            <h2>Live Deer Locations</h2>
+            <div style="position: relative;">
+                <div id="map"></div>
+
+                <!-- Simple Menu Bar (Top-Left) - ONLY Monkey Button -->
+                <div class="map-menu">
+                    <button id="monkey-mode-btn" class="monkey-mode-btn">
+                        🐵 Monkey Mode
+                    </button>
+                </div>
+            </div>
+
+            <!-- Monkey Mode Controls (Below Map, Hidden by Default) -->
+            <div id="monkey-controls" style="display: none;">
+                <div id="rotation-indicator" style="display: none;"></div>
+                <div id="monkey-info">
+                    <p id="monkey-counter">Monkeys Added: 0/5</p>
+                    <p class="monkey-instruction">Click map to add monkeys. Click monkeys to rotate direction.</p>
+                </div>
+
+                <form id="monkey-form">
+                    <div class="form-group">
+                        <label for="monkey-name">Your Name (Optional):</label>
+                        <input type="text" id="monkey-name" placeholder="John Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="monkey-email">Your Email (Optional):</label>
+                        <input type="email" id="monkey-email" placeholder="your@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="monkey-notes">Notes (Optional):</label>
+                        <textarea id="monkey-notes" rows="3" placeholder="Details about the monkeys..."></textarea>
+                    </div>
+
+                    <button type="button" id="submit-monkeys-btn" class="btn-primary">Submit All Monkeys</button>
+                    <button type="button" id="cancel-monkey-btn" class="btn-secondary">Cancel</button>
+                </form>
+            </div>
+
+            <p class="map-info">Click on the map to add a sighting, or use the form below</p>
+        </section>
+
+        <!-- Regular Deer Sighting Form -->
+        <section class="form-section" id="regular-form">
+            <h2>Report a Deer Sighting</h2>
+            <form id="sighting-form">
+                <div class="form-group">
+                    <label>Location Method:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="location-method" value="map" checked>
+                            Click on Map
+                        </label>
+                        <label>
+                            <input type="radio" name="location-method" value="address">
+                            Enter Address
+                        </label>
+                    </div>
+                </div>
+
+                <div id="address-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="street">Street Address (Optional):</label>
+                        <input type="text" id="street" placeholder="123 Main St">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City:</label>
+                            <input type="text" id="city" placeholder="Miami">
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State:</label>
+                            <input type="text" id="state" placeholder="FL" maxlength="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="zip">Zip Code (Optional):</label>
+                            <input type="text" id="zip" placeholder="33101">
+                        </div>
+                    </div>
+                    <button type="button" id="geocode-btn" class="btn-secondary">Find Location</button>
+                </div>
+
+                <div id="map-location" style="display: none;">
+                    <p><strong>Selected Location:</strong></p>
+                    <p id="selected-coords">Click on the map to select a location</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="hunter-name">Your Name (Optional):</label>
+                    <input type="text" id="hunter-name" placeholder="John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="hunter-email">Your Email (Optional):</label>
+                    <input type="email" id="hunter-email" placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes (Optional):</label>
+                    <textarea id="notes" rows="3" placeholder="Big buck, 8 points, near oak tree..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" id="submit-btn">Submit Sighting</button>
+                <p class="form-note">Your submission will be reviewed before appearing on the map</p>
+            </form>
+        </section>
+
+        <!-- Email Subscription -->
+        <section class="subscription-section">
+            <h2>Get Notified of New Deer Sightings</h2>
+            <p>Enter your email to receive notifications when new deer are spotted</p>
+            <form id="subscribe-form">
+                <div class="form-row">
+                    <input type="email" id="subscriber-email" placeholder="your@email.com" required>
+                    <button type="submit" class="btn-primary">Subscribe</button>
+                </div>
+                <p class="privacy-note">We respect your privacy. Your email will never be shared.</p>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Deer Tracker</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://mtulnhypiozhjltbkzwo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10dWxuaHlwaW96aGpsdGJrendvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MTY1NzMsImV4cCI6MjA4NTI5MjU3M30.LY2JEaZ95XcIvXtzWJYqD14vL4gDzTY5a717b_jYCrI';
+
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const MAX_MONKEYS = 5;
+
+let map;
+let selectedLatLng = null;
+let monkeyMode = false;
+let monkeyMarkers = [];
+let currentRotation = 0;
+let currentMonkeyIndex = 0;
+
+const greenIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+const redIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+const blueIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+function confirmSubmit(title, bodyLines){
+  const body = bodyLines.filter(Boolean).join("\n");
+  const ok = window.confirm(`${title}\n\n${body}\n\nPress OK to submit, or Cancel to go back.`);
+  return ok;
+}
+
+function showMessage(message, type = 'success') {
+    const existingAlert = document.querySelector('.alert');
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
+
+    const main = document.querySelector('main');
+    main.insertBefore(alert, main.firstChild);
+
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+function initMap() {
+    map = L.map('map').setView([39.8283, -98.5795], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Get user location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                map.setView([userLat, userLng], 14);
+
+                L.marker([userLat, userLng], { icon: blueIcon })
+                    .addTo(map)
+                    .bindPopup('Your Location')
+                    .openPopup();
+            },
+            () => {
+                console.log('Could not get user location');
+            }
+        );
+    }
+
+    map.on('click', handleMapClick);
+
+    loadDeerSightings();
+    setupRealtimeUpdates();
+}
+
+function setupRealtimeUpdates() {
+    sb
+        .channel('deer_sightings_changes')
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'deer_sightings' },
+            () => {
+                loadDeerSightings();
+            }
+        )
+        .subscribe();
+}
+
+async function loadDeerSightings() {
+    try {
+        const { data, error } = await sb
+            .from('deer_sightings')
+            .select('*')
+            .eq('is_active', true)
+            .order('sighting_time', { ascending: false });
+
+        if (error) throw error;
+
+        // Clear existing sighting markers (but keep user location and monkey markers)
+        map.eachLayer((layer) => {
+            if (layer instanceof L.Marker && layer.options.icon === greenIcon) {
+                map.removeLayer(layer);
+            }
+        });
+
+        data.forEach(sighting => {
+            const marker = L.marker([sighting.latitude, sighting.longitude], { icon: greenIcon })
+                .addTo(map);
+
+            const popupContent = `
+                <div style="color: #000;">
+                    <strong>🦌 Deer Sighting</strong><br>
+                    ${sighting.city ? `${sighting.city}, ${sighting.state}` : 'Location reported'}<br>
+                    ${sighting.hunter_name ? `Reported by: ${sighting.hunter_name}<br>` : ''}
+                    ${sighting.notes ? `Notes: ${sighting.notes}<br>` : ''}
+                    <small>${new Date(sighting.sighting_time).toLocaleString()}</small>
+                </div>
+            `;
+
+            marker.bindPopup(popupContent);
+        });
+
+    } catch (error) {
+        console.error('Error loading deer sightings:', error);
+        showMessage('Error loading deer sightings', 'error');
+    }
+}
+
+function handleMapClick(e) {
+    if (monkeyMode) {
+        handleMonkeyMapClick(e);
+    } else {
+        handleDeerMapClick(e);
+    }
+}
+
+function handleDeerMapClick(e) {
+    selectedLatLng = e.latlng;
+
+    const coordsDisplay = document.getElementById('selected-coords');
+    const mapLocation = document.getElementById('map-location');
+
+    coordsDisplay.textContent = `Lat: ${selectedLatLng.lat.toFixed(6)}, Lng: ${selectedLatLng.lng.toFixed(6)}`;
+    mapLocation.style.display = 'block';
+}
+
+function toggleMonkeyMode() {
+    monkeyMode = !monkeyMode;
+
+    const btn = document.getElementById('monkey-mode-btn');
+    const controls = document.getElementById('monkey-controls');
+    const regularForm = document.getElementById('regular-form');
+
+    if (monkeyMode) {
+        btn.textContent = '🐵 Exit Monkey Mode';
+        btn.style.background = '#00ff88';
+        btn.style.color = '#000';
+        controls.style.display = 'block';
+        regularForm.style.display = 'none';
+
+        resetMonkeyMode();
+        showMessage('Monkey Mode activated! Click map to add monkeys.', 'success');
+    } else {
+        btn.textContent = '🐵 Monkey Mode';
+        btn.style.background = 'rgba(0, 0, 0, 0.8)';
+        btn.style.color = '#00ff88';
+        controls.style.display = 'none';
+        regularForm.style.display = 'block';
+
+        clearMonkeyMarkers();
+        showMessage('Monkey Mode deactivated', 'success');
+    }
+}
+
+function resetMonkeyMode() {
+    monkeyMarkers = [];
+    currentMonkeyIndex = 0;
+    currentRotation = 0;
+    updateMonkeyCounter();
+    document.getElementById('rotation-indicator').style.display = 'none';
+}
+
+function updateMonkeyCounter() {
+    const counter = document.getElementById('monkey-counter');
+    counter.textContent = `Monkeys Added: ${monkeyMarkers.length}/${MAX_MONKEYS}`;
+}
+
+function clearMonkeyMarkers() {
+    monkeyMarkers.forEach(marker => map.removeLayer(marker));
+    monkeyMarkers = [];
+}
+
+function handleMonkeyMapClick(e) {
+    if (monkeyMarkers.length >= MAX_MONKEYS) {
+        showMessage('Maximum 5 monkeys allowed per session!', 'error');
+        return;
+    }
+
+    const monkeyNumber = monkeyMarkers.length + 1;
+    const marker = L.marker(e.latlng, { icon: redIcon }).addTo(map);
+
+    marker.monkeyData = {
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+        direction: 0,
+        number: monkeyNumber
+    };
+
+    marker.bindPopup(`
+        <div style="color: #000;">
+            <strong>🐵 Monkey #${monkeyNumber}</strong><br>
+            Direction: <span class="direction-display">0°</span><br>
+            <small>Click marker to rotate direction</small>
+        </div>
+    `);
+
+    marker.on('click', () => rotateMonkeyDirection(marker));
+
+    monkeyMarkers.push(marker);
+    updateMonkeyCounter();
+
+    showRotationIndicator(monkeyNumber);
+
+    showMessage(`Monkey #${monkeyNumber} added! Click it to rotate direction.`, 'success');
+}
+
+function showRotationIndicator(monkeyNumber) {
+    const indicator = document.getElementById('rotation-indicator');
+    indicator.style.display = 'block';
+    indicator.textContent = `Click Monkey #${monkeyNumber} to rotate direction`;
+}
+
+function rotateMonkeyDirection(marker) {
+    marker.monkeyData.direction = (marker.monkeyData.direction + 45) % 360;
+
+    const popup = marker.getPopup();
+    if (popup) {
+        const content = popup.getContent();
+        const updatedContent = content.replace(/Direction: <span class="direction-display">.*?<\/span>/,
+            `Direction: <span class="direction-display">${marker.monkeyData.direction}°</span>`);
+        popup.setContent(updatedContent);
+    }
+
+    showMessage(`Monkey #${marker.monkeyData.number} direction: ${marker.monkeyData.direction}°`, 'success');
+}
+
+function setupForms() {
+    // Location method toggle
+    const locationRadios = document.querySelectorAll('input[name="location-method"]');
+    const addressFields = document.getElementById('address-fields');
+
+    locationRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            addressFields.style.display = e.target.value === 'address' ? 'block' : 'none';
+        });
+    });
+
+    // Deer sighting form submit
+    document.getElementById('sighting-form').addEventListener('submit', handleSightingSubmit);
+
+    // Subscription form submit
+    document.getElementById('subscribe-form').addEventListener('submit', handleSubscriptionSubmit);
+
+    // Monkey mode buttons
+    document.getElementById('monkey-mode-btn').addEventListener('click', toggleMonkeyMode);
+    document.getElementById('submit-monkeys-btn').addEventListener('click', handleMonkeySubmit);
+    document.getElementById('cancel-monkey-btn').addEventListener('click', () => {
+        toggleMonkeyMode();
+    });
+
+    // Geocode button
+    document.getElementById('geocode-btn').addEventListener('click', handleGeocode);
+}
+
+async function handleSightingSubmit(e) {
+    e.preventDefault();
+
+    const formData = {
+        submitter_name: document.getElementById('hunter-name').value || null,
+        submitter_email: document.getElementById('hunter-email').value || null,
+        notes: document.getElementById('notes').value || null,
+        sighting_time: new Date().toISOString(),
+        status: 'pending'
+    };
+
+    const locationMethod = document.querySelector('input[name="location-method"]:checked').value;
+
+    if (locationMethod === 'map') {
+        if (!selectedLatLng) {
+            showMessage('Please click on the map to select a location first', 'error');
+            return;
+        }
+        formData.latitude = selectedLatLng.lat;
+        formData.longitude = selectedLatLng.lng;
+    } else {
+        const city = document.getElementById('city').value;
+        const state = document.getElementById('state').value;
+
+        if (!city || !state) {
+            showMessage('Please enter at least city and state', 'error');
+            return;
+        }
+
+        if (!selectedLatLng) {
+            showMessage('Please click "Find Location" to locate the address', 'error');
+            return;
+        }
+
+        formData.latitude = selectedLatLng.lat;
+        formData.longitude = selectedLatLng.lng;
+        formData.street_address = document.getElementById('street').value || null;
+        formData.city = city;
+        formData.state = state.toUpperCase();
+        formData.zip_code = document.getElementById('zip').value || null;
+    }
+
+    const previewLines = [
+        `Type: Deer sighting (pending review)`,
+        `Location: ${formData.city && formData.state ? `${formData.city}, ${formData.state}` : 'Map coordinates'}`,
+        `Latitude: ${Number(formData.latitude).toFixed(6)}`,
+        `Longitude: ${Number(formData.longitude).toFixed(6)}`,
+        formData.street_address ? `Street: ${formData.street_address}` : null,
+        formData.zip_code ? `Zip: ${formData.zip_code}` : null,
+        formData.submitter_name ? `Name: ${formData.submitter_name}` : `Name: (not provided)`,
+        formData.submitter_email ? `Email: ${formData.submitter_email}` : `Email: (not provided)`,
+        formData.notes ? `Notes: ${formData.notes}` : `Notes: (none)`
+    ];
+
+    const ok = confirmSubmit("Confirm Submission", previewLines);
+    if (!ok) return;
+
+    try {
+        const { error } = await sb
+            .from('pending_submissions')
+            .insert([formData]);
+
+        if (error) throw error;
+
+        showMessage('Sighting submitted successfully! It will be reviewed before appearing on the map.', 'success');
+        document.getElementById('sighting-form').reset();
+        selectedLatLng = null;
+        document.getElementById('map-location').style.display = 'none';
+
+    } catch (error) {
+        console.error('Error submitting sighting:', error);
+        showMessage('Error submitting sighting. Please try again.', 'error');
+    }
+}
+
+
+async function handleSubscriptionSubmit(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('subscriber-email').value;
+
+    try {
+        const { error } = await sb
+            .from('subscribers')
+            .insert([{ email }]);
+
+        if (error) throw error;
+
+        showMessage('Successfully subscribed to notifications!', 'success');
+        document.getElementById('subscribe-form').reset();
+
+    } catch (error) {
+        console.error('Error subscribing:', error);
+
+        if (error.code === '23505') { // unique constraint
+            showMessage('You are already subscribed!', 'error');
+        } else {
+            showMessage('Error subscribing. Please try again.', 'error');
+        }
+    }
+}
+
+async function handleGeocode() {
+    const street = document.getElementById('street').value;
+    const city = document.getElementById('city').value;
+    const state = document.getElementById('state').value;
+    const zip = document.getElementById('zip').value;
+
+    if (!city || !state) {
+        showMessage('Please enter at least city and state', 'error');
+        return;
+    }
+
+    const address = `${street ? street + ', ' : ''}${city}, ${state} ${zip || ''}`.trim();
+
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+        const data = await response.json();
+
+        if (data.length === 0) {
+            showMessage('Address not found. Please check and try again.', 'error');
+            return;
+        }
+
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+
+        selectedLatLng = { lat, lng: lon };
+        map.setView([lat, lon], 14);
+
+        const coordsDisplay = document.getElementById('selected-coords');
+        const mapLocation = document.getElementById('map-location');
+
+        coordsDisplay.textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lon.toFixed(6)}`;
+        mapLocation.style.display = 'block';
+
+        showMessage('Location found! You can now submit the sighting.', 'success');
+
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        showMessage('Error finding location. Please try again.', 'error');
+    }
+}
+
+async function handleMonkeySubmit() {
+    if (monkeyMarkers.length === 0) {
+        showMessage('Please add at least one monkey on the map first!', 'error');
+        return;
+    }
+
+    const sessionId = crypto.randomUUID();
+    const submitterName = document.getElementById('monkey-name').value || null;
+    const submitterEmail = document.getElementById('monkey-email').value || null;
+    const notes = document.getElementById('monkey-notes').value || null;
+
+    const previewLines = [
+        `Type: Monkey Mode (pending review)`,
+        `Monkeys: ${monkeyMarkers.length}`,
+        `Session ID: ${sessionId}`,
+        submitterName ? `Name: ${submitterName}` : `Name: (not provided)`,
+        submitterEmail ? `Email: ${submitterEmail}` : `Email: (not provided)`,
+        notes ? `Notes: ${notes}` : `Notes: (none)`,
+        "",
+        "Monkeys detail:"
+    ];
+
+    monkeyMarkers.forEach((m, i) => {
+        previewLines.push(
+            `#${i + 1} lat=${Number(m.monkeyData.lat).toFixed(6)}, lng=${Number(m.monkeyData.lng).toFixed(6)}, dir=${m.monkeyData.direction}°`
+        );
+    });
+
+    const ok = confirmSubmit("Confirm Monkey Submissions", previewLines);
+    if (!ok) return;
+
+    const monkeySubmissions = monkeyMarkers.map((marker, index) => ({
+        latitude: marker.monkeyData.lat,
+        longitude: marker.monkeyData.lng,
+        submitter_name: submitterName,
+        submitter_email: submitterEmail,
+        notes: notes,
+        sighting_time: new Date().toISOString(),
+        status: 'pending',
+        monkey_count: monkeyMarkers.length,
+        monkey_direction: marker.monkeyData.direction,
+        monkey_number: index + 1,
+        session_id: sessionId
+    }));
+
+    try {
+        const { error } = await sb
+            .from('pending_submissions')
+            .insert(monkeySubmissions);
+
+        if (error) throw error;
+
+        showMessage(`Successfully submitted ${monkeyMarkers.length} monkey sightings! Session ID: ${sessionId}`, 'success');
+
+        // Reset monkey mode
+        document.getElementById('monkey-form').reset();
+        clearMonkeyMarkers();
+        toggleMonkeyMode();
+
+    } catch (error) {
+        console.error('Error submitting monkeys:', error);
+        showMessage('Error submitting monkey sightings. Please try again.', 'error');
+    }
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    setupForms();
+});
+    </script>
+</body>
+</html>
