@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FairQuest | Management Login</title>
+
+  <!-- Basic hardening -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Referrer-Policy" content="no-referrer" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+  <meta http-equiv="Content-Security-Policy"
+        content="
+          default-src 'self';
+          base-uri 'self';
+          form-action 'self';
+          frame-ancestors 'none';
+          object-src 'none';
+          img-src 'self' data:;
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src https://fonts.gstatic.com;
+          script-src 'self' https://esm.sh;
+          connect-src 'self' https://mtulnhypiozhjltbkzwo.supabase.co https://*.supabase.co;
+        " />
+
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Domine&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background:#000;
+      color:#f0e6d2;
+      font-family:'Domine', serif;
+      padding: 40px 16px;
+      text-align:center;
+    }
+    h1 {
+      font-family:'Cinzel', serif;
+      color:#aa8452;
+      margin: 0 0 18px;
+    }
+    .card {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 18px 18px 22px;
+      border: 1px solid #2a2215;
+      border-radius: 14px;
+      background: rgba(20, 16, 10, 0.7);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.45);
+      text-align:left;
+    }
+    label { display:block; margin: 12px 0 6px; }
+    input {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 10px;
+      border: 1px solid #3a2f1f;
+      background: #0b0a08;
+      color: #f0e6d2;
+      outline: none;
+      font-size: 16px;
+    }
+    input:focus { border-color:#aa8452; }
+    .row {
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      background: #c79a3b;
+      color:#000;
+      font-weight: 700;
+      cursor:pointer;
+      font-size: 16px;
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .muted {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #c9b99a;
+      line-height: 1.35;
+    }
+    .msg {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #3a2f1f;
+      background: #0b0a08;
+      min-height: 22px;
+      color: #f0e6d2;
+    }
+    .msg.error { border-color:#7a2b2b; color:#ffb3b3; }
+    .msg.ok { border-color:#2b7a3b; color:#bfffcf; }
+    .tiny {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #9f8a67;
+      text-align:center;
+    }
+    /* Honeypot (bot trap) */
+    .hp { position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden; }
+  </style>
+</head>
+
+<body>
+  <h1>Management Login</h1>
+
+  <div class="card">
+    <form id="loginForm" autocomplete="off" novalidate>
+      <div class="hp" aria-hidden="true">
+        <label>Leave this field empty</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" inputmode="email" autocomplete="username" required />
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+
+      <div class="row">
+        <button id="loginBtn" type="submit">Sign In</button>
+      </div>
+
+      <div id="msg" class="msg muted">Enter your credentials to continue.</div>
+
+      <div class="tiny">
+        Authorized accounts only. If you believe you should have access, contact an admin.
+      </div>
+    </form>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = 'https://mtulnhypiozhjltbkzwo.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10dWxuaHlwaW96aGpsdGJrendvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MTY1NzMsImV4cCI6MjA4NTI5MjU3M30.LY2JEaZ95XcIvXtzWJYqD14vL4gDzTY5a717b_jYCrI';
+
+    // Pages (force .html to avoid ambiguity)
+    const ROUTES = {
+      super_admin: '/admin/supadmin_index.html',
+      admin: '/admin/admin_index.html',
+      manager: '/admin/mang_index.html',
+      spotter: '/admin/scout_index.html'
+    };
+
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const form = document.getElementById('loginForm');
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('loginBtn');
+
+    function setMsg(text, kind = '') {
+      msg.textContent = text;
+      msg.className = 'msg' + (kind ? ' ' + kind : '');
+    }
+
+    function setBusy(isBusy) {
+      btn.disabled = isBusy;
+      btn.textContent = isBusy ? 'Signing In…' : 'Sign In';
+    }
+
+    function safeRedirect(path) {
+      // prevent open redirects
+      if (!path || typeof path !== 'string' || !path.startsWith('/admin/')) return;
+      window.location.replace(path);
+    }
+
+    async function roleRedirectOrDeny() {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user?.id) return;
+
+      // 1) ADMINS (highest) — decide super_admin vs admin
+      {
+        const { data, error } = await sb
+          .from('admins')
+          .select('role,is_active')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!error && data && data.is_active === true) {
+          if (data.role === 'super_admin') return safeRedirect(ROUTES.super_admin);
+          return safeRedirect(ROUTES.admin);
+        }
+      }
+
+      // 2) REGION MANAGERS
+      {
+        const { data, error } = await sb
+          .from('region_managers')
+          .select('is_active')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!error && data && data.is_active === true) {
+          return safeRedirect(ROUTES.manager);
+        }
+      }
+
+      // 3) SPOTTERS
+      {
+        const { data, error } = await sb
+          .from('spotters')
+          .select('is_active')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!error && data && data.is_active === true) {
+          return safeRedirect(ROUTES.spotter);
+        }
+      }
+
+      // Authenticated but not authorized
+      await sb.auth.signOut();
+      setMsg('Access denied. Please contact an admin for access.', 'error');
+    }
+
+    // If already logged in, route immediately
+    (async () => {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session?.user?.id) {
+          setMsg('Checking access…', '');
+          await roleRedirectOrDeny();
+        }
+      } catch {
+        // keep quiet
+      }
+    })();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // honeypot check (bots fill it)
+      const hp = document.getElementById('website');
+      if (hp && hp.value && hp.value.trim().length > 0) {
+        setMsg('Access denied.', 'error');
+        return;
+      }
+
+      const email = (document.getElementById('email').value || '').trim();
+      const password = document.getElementById('password').value || '';
+
+      if (!email || !password) {
+        setMsg('Enter email and password.', 'error');
+        return;
+      }
+
+      setBusy(true);
+      setMsg('Signing in…', '');
+
+      try {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+          // don’t leak whether email exists
+          setMsg('Login failed. Check your email/password.', 'error');
+          setBusy(false);
+          return;
+        }
+
+        setMsg('Checking access…', '');
+        await roleRedirectOrDeny();
+      } catch {
+        setMsg('Login failed. Try again.', 'error');
+      } finally {
+        setBusy(false);
+      }
+    });
+  </script>
+</body>
+</html>
