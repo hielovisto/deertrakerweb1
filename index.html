@@ -81,6 +81,75 @@ section h2 {
     margin-top: 1rem;
     text-align: center;
 }
+/* Zip search (above map) */
+.map-search{
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #222;
+    border-radius: 12px;
+    background: #0f0f0f;
+}
+
+.map-search-row{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.map-search-row input{
+    margin: 0;
+}
+
+.map-search-note{
+    margin-top: 0.6rem;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* State Jump UI */
+.state-jump {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #222;
+    background: #0f0f0f;
+}
+
+.state-jump-row {
+    display: grid;
+    grid-template-columns: 180px 1fr auto auto;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.state-jump-row label {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.state-jump-row select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #222;
+    border-radius: 8px;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-size: 1rem;
+}
+
+.state-jump-row select:focus {
+    outline: none;
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+.state-jump-note {
+    margin-top: 0.75rem;
+    color: #888;
+    font-size: 0.9rem;
+    text-align: left;
+}
 
 /* Form Styles */
 .form-group {
@@ -302,7 +371,60 @@ footer p {
     #map {
         height: 400px;
     }
+
+    .state-jump-row {
+        grid-template-columns: 1fr;
+    }
 }
+/* Custom stacked map controls (Monkey -> Zoom -> My Location) */
+.leaflet-control.custom-map-controls {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+.custom-map-controls .ctrl-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Make buttons match your theme */
+.custom-map-controls .ctrl-btn {
+    width: 160px;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.85);
+    color: #00ff88;
+    border: 2px solid #00ff88;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    transition: all 0.3s ease;
+}
+
+.custom-map-controls .ctrl-btn:hover {
+    background: rgba(0, 255, 136, 0.15);
+}
+
+.custom-map-controls .ctrl-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Zoom buttons smaller + centered */
+.custom-map-controls .zoom-row {
+    display: flex;
+    gap: 8px;
+}
+
+.custom-map-controls .zoom-btn {
+    width: 76px;
+    text-align: center;
+}
+
 </style>
 </head>
 <body>
@@ -317,27 +439,59 @@ footer p {
         <!-- Map Section -->
         <section class="map-section">
             <h2>Live Deer Locations</h2>
-            <div style="position: relative;">
-                <div id="map"></div>
 
-                <!-- Simple Menu Bar (Top-Left) - ONLY Monkey Button -->
-                <div class="map-menu">
-                    <button id="monkey-mode-btn" class="monkey-mode-btn">
-                        🐵 Monkey Mode
-                    </button>
+            <!-- State Jump (no GPS needed) -->
+            <div class="state-jump">
+                <div class="state-jump-row">
+                    <label for="state-jump-select">Jump to a state:</label>
+                    <select id="state-jump-select">
+                        <option value="">Select a state…</option>
+                    </select>
+                    <button type="button" id="state-jump-btn" class="btn-secondary">Go</button>
+                    <button type="button" id="state-reset-btn" class="btn-secondary">Reset</button>
                 </div>
+                <p class="state-jump-note">
+                    If you don’t want to share location, choose a state and the map will zoom there.
+                </p>
             </div>
+
+           <!-- Zip search (US-only) -->
+<div class="map-search">
+    <div class="map-search-row">
+        <input
+            type="text"
+            id="zip-input"
+            inputmode="numeric"
+            autocomplete="postal-code"
+            placeholder="Enter US Zip Code (e.g., 33101)"
+            maxlength="10"
+        />
+        <button type="button" id="zip-go-btn" class="btn-secondary">Go</button>
+    </div>
+    <p class="map-search-note">Tip: If you don’t want to share GPS, enter a US zip code to jump the map.</p>
+</div>
+
+<div style="position: relative;">
+    <div id="map"></div>
+
+<!-- Map controls are now built as a Leaflet control (Monkey + Zoom + My Location) -->
+
+</div>
+
 
             <!-- Monkey Mode Controls (Below Map, Hidden by Default) -->
             <div id="monkey-controls" style="display: none;">
-                <div id="rotation-indicator" style="display: none;"></div>
-                <div id="monkey-info">
-                    <p id="monkey-counter">Monkeys Added: 0/5</p>
-                    <p class="monkey-instruction">Click map to add monkeys. Click monkeys to rotate direction.</p>
-                </div>
+    <div id="rotation-indicator" style="display: none;"></div>
+    <div id="monkey-info">
+        <p id="monkey-counter">Monkeys Added: 0/5</p>
+        <p class="monkey-instruction">Click map to add monkeys. Click monkeys to rotate direction.</p>
+    </div>
 
-                <form id="monkey-form">
-                    <div class="form-group">
+    <!-- NEW: Monkey list preview (lat/lng + city/state) -->
+    <div id="monkey-list" style="margin-bottom: 1rem;"></div>
+
+    <form id="monkey-form">
+    <div class="form-group">
                         <label for="monkey-name">Your Name (Optional):</label>
                         <input type="text" id="monkey-name" placeholder="John Doe">
                     </div>
@@ -460,6 +614,10 @@ const MAX_MONKEYS = 5;
 let map;
 let selectedLatLng = null;
 let monkeyMode = false;
+
+let userMarker = null;
+let lastUserLatLng = null;
+
 let monkeyMarkers = [];
 let currentRotation = 0;
 let currentMonkeyIndex = 0;
@@ -490,6 +648,137 @@ const blueIcon = new L.Icon({
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
 });
+const US_STATE_TO_ABBR = {
+  "alabama":"AL","alaska":"AK","arizona":"AZ","arkansas":"AR","california":"CA","colorado":"CO","connecticut":"CT",
+  "delaware":"DE","florida":"FL","georgia":"GA","hawaii":"HI","idaho":"ID","illinois":"IL","indiana":"IN","iowa":"IA",
+  "kansas":"KS","kentucky":"KY","louisiana":"LA","maine":"ME","maryland":"MD","massachusetts":"MA","michigan":"MI",
+  "minnesota":"MN","mississippi":"MS","missouri":"MO","montana":"MT","nebraska":"NE","nevada":"NV","new hampshire":"NH",
+  "new jersey":"NJ","new mexico":"NM","new york":"NY","north carolina":"NC","north dakota":"ND","ohio":"OH","oklahoma":"OK",
+  "oregon":"OR","pennsylvania":"PA","rhode island":"RI","south carolina":"SC","south dakota":"SD","tennessee":"TN","texas":"TX",
+  "utah":"UT","vermont":"VT","virginia":"VA","washington":"WA","west virginia":"WV","wisconsin":"WI","wyoming":"WY",
+  "district of columbia":"DC"
+};
+
+function normalizeStateAbbr(stateText) {
+  if (!stateText) return null;
+  const s = String(stateText).trim();
+  if (!s) return null;
+  if (s.length === 2) return s.toUpperCase();
+  const key = s.toLowerCase();
+  return US_STATE_TO_ABBR[key] || s.toUpperCase();
+}
+
+async function reverseGeocodeUS(lat, lng) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&addressdetails=1`;
+
+  const res = await fetch(url, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`reverse geocode failed (${res.status}) ${txt}`.trim());
+  }
+
+  const json = await res.json();
+
+  const addr = json.address || {};
+  const city =
+    addr.city || addr.town || addr.village || addr.hamlet || addr.county || null;
+
+  const stateAbbr = normalizeStateAbbr(addr.state || addr.region || null);
+  const zip = addr.postcode ? String(addr.postcode).trim() : null;
+
+  return {
+    city: city ? String(city).trim() : null,
+    state: stateAbbr || null,
+    zip_code: zip || null
+  };
+}
+
+/**
+ * State centers (approx). Privacy-first: no GPS required.
+ */
+const STATE_CENTERS = {
+  "AL": { name: "Alabama", lat: 32.806671, lng: -86.79113, zoom: 7 },
+  "AK": { name: "Alaska", lat: 61.370716, lng: -152.404419, zoom: 4 },
+  "AZ": { name: "Arizona", lat: 33.729759, lng: -111.431221, zoom: 7 },
+  "AR": { name: "Arkansas", lat: 34.969704, lng: -92.373123, zoom: 7 },
+  "CA": { name: "California", lat: 36.116203, lng: -119.681564, zoom: 6 },
+  "CO": { name: "Colorado", lat: 39.059811, lng: -105.311104, zoom: 7 },
+  "CT": { name: "Connecticut", lat: 41.597782, lng: -72.755371, zoom: 8 },
+  "DE": { name: "Delaware", lat: 39.318523, lng: -75.507141, zoom: 8 },
+  "FL": { name: "Florida", lat: 27.766279, lng: -81.686783, zoom: 7 },
+  "GA": { name: "Georgia", lat: 33.040619, lng: -83.643074, zoom: 7 },
+  "HI": { name: "Hawaii", lat: 21.094318, lng: -157.498337, zoom: 7 },
+  "ID": { name: "Idaho", lat: 44.240459, lng: -114.478828, zoom: 6 },
+  "IL": { name: "Illinois", lat: 40.349457, lng: -88.986137, zoom: 7 },
+  "IN": { name: "Indiana", lat: 39.849426, lng: -86.258278, zoom: 7 },
+  "IA": { name: "Iowa", lat: 42.011539, lng: -93.210526, zoom: 7 },
+  "KS": { name: "Kansas", lat: 38.5266, lng: -96.726486, zoom: 7 },
+  "KY": { name: "Kentucky", lat: 37.66814, lng: -84.670067, zoom: 7 },
+  "LA": { name: "Louisiana", lat: 31.169546, lng: -91.867805, zoom: 7 },
+  "ME": { name: "Maine", lat: 44.693947, lng: -69.381927, zoom: 7 },
+  "MD": { name: "Maryland", lat: 39.063946, lng: -76.802101, zoom: 7 },
+  "MA": { name: "Massachusetts", lat: 42.230171, lng: -71.530106, zoom: 8 },
+  "MI": { name: "Michigan", lat: 43.326618, lng: -84.536095, zoom: 6 },
+  "MN": { name: "Minnesota", lat: 45.694454, lng: -93.900192, zoom: 6 },
+  "MS": { name: "Mississippi", lat: 32.741646, lng: -89.678696, zoom: 7 },
+  "MO": { name: "Missouri", lat: 38.456085, lng: -92.288368, zoom: 7 },
+  "MT": { name: "Montana", lat: 46.921925, lng: -110.454353, zoom: 6 },
+  "NE": { name: "Nebraska", lat: 41.12537, lng: -98.268082, zoom: 7 },
+  "NV": { name: "Nevada", lat: 38.313515, lng: -117.055374, zoom: 6 },
+  "NH": { name: "New Hampshire", lat: 43.452492, lng: -71.563896, zoom: 8 },
+  "NJ": { name: "New Jersey", lat: 40.298904, lng: -74.521011, zoom: 8 },
+  "NM": { name: "New Mexico", lat: 34.840515, lng: -106.248482, zoom: 7 },
+  "NY": { name: "New York", lat: 42.165726, lng: -74.948051, zoom: 7 },
+  "NC": { name: "North Carolina", lat: 35.630066, lng: -79.806419, zoom: 7 },
+  "ND": { name: "North Dakota", lat: 47.528912, lng: -99.784012, zoom: 7 },
+  "OH": { name: "Ohio", lat: 40.388783, lng: -82.764915, zoom: 7 },
+  "OK": { name: "Oklahoma", lat: 35.565342, lng: -96.928917, zoom: 7 },
+  "OR": { name: "Oregon", lat: 44.572021, lng: -122.070938, zoom: 6 },
+  "PA": { name: "Pennsylvania", lat: 40.590752, lng: -77.209755, zoom: 7 },
+  "RI": { name: "Rhode Island", lat: 41.680893, lng: -71.51178, zoom: 9 },
+  "SC": { name: "South Carolina", lat: 33.856892, lng: -80.945007, zoom: 7 },
+  "SD": { name: "South Dakota", lat: 44.299782, lng: -99.438828, zoom: 7 },
+  "TN": { name: "Tennessee", lat: 35.747845, lng: -86.692345, zoom: 7 },
+  "TX": { name: "Texas", lat: 31.054487, lng: -97.563461, zoom: 6 },
+  "UT": { name: "Utah", lat: 40.150032, lng: -111.862434, zoom: 7 },
+  "VT": { name: "Vermont", lat: 44.045876, lng: -72.710686, zoom: 8 },
+  "VA": { name: "Virginia", lat: 37.769337, lng: -78.169968, zoom: 7 },
+  "WA": { name: "Washington", lat: 47.400902, lng: -121.490494, zoom: 6 },
+  "WV": { name: "West Virginia", lat: 38.491226, lng: -80.954453, zoom: 7 },
+  "WI": { name: "Wisconsin", lat: 44.268543, lng: -89.616508, zoom: 7 },
+  "WY": { name: "Wyoming", lat: 42.755966, lng: -107.30249, zoom: 7 },
+  "DC": { name: "District of Columbia", lat: 38.9072, lng: -77.0369, zoom: 10 }
+};
+
+const DEFAULT_VIEW = { lat: 39.8283, lng: -98.5795, zoom: 4 };
+
+function populateStateDropdown() {
+  const sel = document.getElementById('state-jump-select');
+  if (!sel) return;
+
+  const entries = Object.entries(STATE_CENTERS)
+    .sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+  entries.forEach(([code, info]) => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = `${info.name} (${code})`;
+    sel.appendChild(opt);
+  });
+}
+
+function jumpToState(code) {
+  const info = STATE_CENTERS[code];
+  if (!info || !map) return;
+  map.setView([info.lat, info.lng], info.zoom);
+  showMessage(`Map moved to ${info.name}.`, 'success');
+}
+
 function confirmSubmit(title, bodyLines){
   const body = bodyLines.filter(Boolean).join("\n");
   const ok = window.confirm(`${title}\n\n${body}\n\nPress OK to submit, or Cancel to go back.`);
@@ -515,38 +804,168 @@ function showMessage(message, type = 'success') {
         }
     }, 5000);
 }
+function isValidUsZip(zipRaw){
+    const zip = zipRaw.trim();
+    return /^\d{5}(-\d{4})?$/.test(zip);
+}
+
+async function goToZip(zipRaw){
+    const zip = zipRaw.trim();
+
+    if (!isValidUsZip(zip)){
+        showMessage('Please enter a valid US zip code (e.g., 33101 or 33101-1234).', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('zip-go-btn');
+    const input = document.getElementById('zip-input');
+
+    try {
+        btn.disabled = true;
+        btn.textContent = 'Searching...';
+
+        // Try postalcode endpoint first (US only)
+        const url1 = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&postalcode=${encodeURIComponent(zip)}&limit=1`;
+        let res = await fetch(url1, { headers: { 'Accept': 'application/json' } });
+        let data = await res.json();
+
+        // Fallback: generic query if postalcode returns empty
+        if (!Array.isArray(data) || data.length === 0){
+            const url2 = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&q=${encodeURIComponent(zip)}&limit=1`;
+            res = await fetch(url2, { headers: { 'Accept': 'application/json' } });
+            data = await res.json();
+        }
+
+        if (!Array.isArray(data) || data.length === 0){
+            showMessage('Zip code not found. Try a different zip.', 'error');
+            return;
+        }
+
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)){
+            showMessage('Zip code lookup returned an invalid location. Try again.', 'error');
+            return;
+        }
+
+        map.setView([lat, lon], 12);
+        showMessage(`Map moved to zip code ${zip}.`, 'success');
+
+        // Optional: close keyboard on mobile
+        input.blur();
+
+    } catch (err){
+        console.error('Zip geocode error:', err);
+        showMessage('Error looking up zip code. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Go';
+    }
+}
+function centerOnUserLocation() {
+    if (!navigator.geolocation) {
+        showMessage('Geolocation not available on this device.', 'error');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            lastUserLatLng = { lat: userLat, lng: userLng };
+
+            map.setView([userLat, userLng], 14);
+
+            if (userMarker) {
+                userMarker.setLatLng([userLat, userLng]);
+            } else {
+                userMarker = L.marker([userLat, userLng], { icon: blueIcon })
+                    .addTo(map)
+                    .bindPopup('Your Location');
+            }
+        },
+        () => {
+            showMessage('Location not shared. Use the state dropdown or zip search.', 'success');
+        }
+    );
+}
 
 function initMap() {
-    map = L.map('map').setView([39.8283, -98.5795], 4);
+    // Disable default zoom control so it doesn't overlap anything
+    map = L.map('map', { zoomControl: false }).setView([DEFAULT_VIEW.lat, DEFAULT_VIEW.lng], DEFAULT_VIEW.zoom);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Get user location
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const userLat = position.coords.latitude;
-                const userLng = position.coords.longitude;
-                map.setView([userLat, userLng], 14);
+    // Add custom stacked control: Monkey Mode -> Zoom -> My Location
+    const CustomControls = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd: function () {
+            const container = L.DomUtil.create('div', 'leaflet-control custom-map-controls');
+            const stack = L.DomUtil.create('div', 'ctrl-stack', container);
 
-                L.marker([userLat, userLng], { icon: blueIcon })
-                    .addTo(map)
-                    .bindPopup('Your Location')
-                    .openPopup();
-            },
-            () => {
-                console.log('Could not get user location');
-            }
-        );
-    }
+            // Monkey Mode button (same id so your existing listeners keep working)
+            const monkeyBtn = L.DomUtil.create('button', 'ctrl-btn', stack);
+            monkeyBtn.id = 'monkey-mode-btn';
+            monkeyBtn.type = 'button';
+            monkeyBtn.textContent = '🐵 Monkey Mode';
+
+            // Zoom + / -
+            const zoomRow = L.DomUtil.create('div', 'zoom-row', stack);
+
+            const zoomIn = L.DomUtil.create('button', 'ctrl-btn zoom-btn', zoomRow);
+            zoomIn.type = 'button';
+            zoomIn.textContent = '＋';
+
+            const zoomOut = L.DomUtil.create('button', 'ctrl-btn zoom-btn', zoomRow);
+            zoomOut.type = 'button';
+            zoomOut.textContent = '－';
+
+            // My Location button
+            const locBtn = L.DomUtil.create('button', 'ctrl-btn', stack);
+            locBtn.id = 'my-location-btn';
+            locBtn.type = 'button';
+            locBtn.textContent = '📍 My Location';
+
+            // Prevent map drag/zoom when clicking buttons
+            L.DomEvent.disableClickPropagation(container);
+            L.DomEvent.disableScrollPropagation(container);
+
+            // Wire zoom buttons
+            L.DomEvent.on(zoomIn, 'click', (e) => {
+                L.DomEvent.stop(e);
+                map.zoomIn();
+            });
+
+            L.DomEvent.on(zoomOut, 'click', (e) => {
+                L.DomEvent.stop(e);
+                map.zoomOut();
+            });
+
+            // Wire location button
+            L.DomEvent.on(locBtn, 'click', (e) => {
+                L.DomEvent.stop(e);
+                centerOnUserLocation();
+            });
+
+            return container;
+        }
+    });
+
+    map.addControl(new CustomControls());
+
+    // Initial attempt to center on user (same behavior as before, but reusable)
+    centerOnUserLocation();
 
     map.on('click', handleMapClick);
 
     loadDeerSightings();
     setupRealtimeUpdates();
 }
+
 
 function setupRealtimeUpdates() {
     sb
@@ -599,6 +1018,65 @@ async function loadDeerSightings() {
         showMessage('Error loading deer sightings', 'error');
     }
 }
+function renderMonkeyList() {
+    const host = document.getElementById('monkey-list');
+    if (!host) return;
+
+    if (!monkeyMarkers || monkeyMarkers.length === 0) {
+        host.innerHTML = '';
+        return;
+    }
+
+    const rows = monkeyMarkers.map((m, idx) => {
+        const md = m.monkeyData || {};
+        const lat = Number(md.lat);
+        const lng = Number(md.lng);
+
+        const latTxt = Number.isFinite(lat) ? lat.toFixed(6) : '';
+        const lngTxt = Number.isFinite(lng) ? lng.toFixed(6) : '';
+
+        const city = md.city ? md.city : '(loading...)';
+        const state = md.state ? md.state : '';
+        const zip = md.zip_code ? md.zip_code : '';
+
+        const place = (md.city && md.state)
+            ? `${md.city}, ${md.state}${zip ? ' ' + zip : ''}`
+            : city; // shows (loading...) or (unknown) etc
+
+        return `
+            <tr>
+                <td style="padding:8px;border-bottom:1px solid #222;color:#00ff88;font-weight:700;">#${idx + 1}</td>
+                <td style="padding:8px;border-bottom:1px solid #222;">${latTxt}, ${lngTxt}</td>
+                <td style="padding:8px;border-bottom:1px solid #222;">${place}</td>
+                <td style="padding:8px;border-bottom:1px solid #222;">${(md.direction ?? 0)}°</td>
+            </tr>
+        `;
+    }).join('');
+
+    host.innerHTML = `
+        <div style="border:1px solid #222;border-radius:10px;overflow:hidden;">
+            <div style="padding:10px 12px;background:#0a0a0a;border-bottom:1px solid #222;color:#00ff88;font-weight:800;">
+                Monkeys Added (preview)
+            </div>
+            <div style="overflow:auto;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;padding:8px;border-bottom:1px solid #222;color:#b0b0b0;font-weight:700;">#</th>
+                            <th style="text-align:left;padding:8px;border-bottom:1px solid #222;color:#b0b0b0;font-weight:700;">Lat/Lng</th>
+                            <th style="text-align:left;padding:8px;border-bottom:1px solid #222;color:#b0b0b0;font-weight:700;">City/State</th>
+                            <th style="text-align:left;padding:8px;border-bottom:1px solid #222;color:#b0b0b0;font-weight:700;">Dir</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            <div style="padding:10px 12px;background:#0f0f0f;color:#888;font-size:0.9rem;">
+                If City/State stays “(loading...)”, reverse-geocode is failing (check Console + Network).
+            </div>
+        </div>
+    `;
+}
 
 function handleMapClick(e) {
     if (monkeyMode) {
@@ -614,9 +1092,27 @@ function handleDeerMapClick(e) {
     const coordsDisplay = document.getElementById('selected-coords');
     const mapLocation = document.getElementById('map-location');
 
-    coordsDisplay.textContent = `Lat: ${selectedLatLng.lat.toFixed(6)}, Lng: ${selectedLatLng.lng.toFixed(6)}`;
+    coordsDisplay.textContent = `Looking up location... (${selectedLatLng.lat.toFixed(6)}, ${selectedLatLng.lng.toFixed(6)})`;
     mapLocation.style.display = 'block';
+
+    reverseGeocodeUS(selectedLatLng.lat, selectedLatLng.lng)
+        .then((loc) => {
+            selectedLatLng = { ...selectedLatLng, ...loc };
+
+            const place = [
+                loc.city ? loc.city : null,
+                loc.state ? loc.state : null,
+                loc.zip_code ? loc.zip_code : null
+            ].filter(Boolean).join(', ');
+
+            coordsDisplay.textContent =
+                `${place || 'Location reported'} (Lat: ${selectedLatLng.lat.toFixed(6)}, Lng: ${selectedLatLng.lng.toFixed(6)})`;
+        })
+        .catch(() => {
+            coordsDisplay.textContent = `Lat: ${selectedLatLng.lat.toFixed(6)}, Lng: ${selectedLatLng.lng.toFixed(6)}`;
+        });
 }
+
 
 function toggleMonkeyMode() {
     monkeyMode = !monkeyMode;
@@ -677,12 +1173,16 @@ function handleMonkeyMapClick(e) {
         lat: e.latlng.lat,
         lng: e.latlng.lng,
         direction: 0,
-        number: monkeyNumber
+        number: monkeyNumber,
+        city: null,
+        state: null,
+        zip_code: null
     };
 
-    marker.bindPopup(`
+        marker.bindPopup(`
         <div style="color: #000;">
             <strong>🐵 Monkey #${monkeyNumber}</strong><br>
+            Location: <span class="monkey-place">(loading...)</span><br>
             Direction: <span class="direction-display">0°</span><br>
             <small>Click marker to rotate direction</small>
         </div>
@@ -692,11 +1192,44 @@ function handleMonkeyMapClick(e) {
 
     monkeyMarkers.push(marker);
     updateMonkeyCounter();
+    renderMonkeyList();
+
+    reverseGeocodeUS(marker.monkeyData.lat, marker.monkeyData.lng)
+        .then((loc) => {
+            marker.monkeyData.city = loc.city || null;
+            marker.monkeyData.state = loc.state || null;
+            marker.monkeyData.zip_code = loc.zip_code || null;
+
+            // Update popup text too
+            const popup = marker.getPopup();
+            if (popup) {
+                const place = (marker.monkeyData.city && marker.monkeyData.state)
+                    ? `${marker.monkeyData.city}, ${marker.monkeyData.state}${marker.monkeyData.zip_code ? ' ' + marker.monkeyData.zip_code : ''}`
+                    : '(unknown)';
+
+                const content = popup.getContent();
+                const updated = content.replace(
+                    /Location:\s*<span class="monkey-place">.*?<\/span>/,
+                    `Location: <span class="monkey-place">${place}</span>`
+                );
+                popup.setContent(updated);
+            }
+
+            renderMonkeyList();
+        })
+        .catch((err) => {
+            console.error('Monkey reverse geocode failed:', err);
+            // Show in list as unknown instead of loading forever
+            marker.monkeyData.city = '(unknown)';
+            marker.monkeyData.state = null;
+            marker.monkeyData.zip_code = null;
+            renderMonkeyList();
+        });
 
     showRotationIndicator(monkeyNumber);
-
     showMessage(`Monkey #${monkeyNumber} added! Click it to rotate direction.`, 'success');
 }
+
 
 function showRotationIndicator(monkeyNumber) {
     const indicator = document.getElementById('rotation-indicator');
@@ -742,8 +1275,51 @@ function setupForms() {
         toggleMonkeyMode();
     });
 
-    // Geocode button
-    document.getElementById('geocode-btn').addEventListener('click', handleGeocode);
+  // Geocode button (address mode)
+document.getElementById('geocode-btn').addEventListener('click', handleGeocode);
+
+// Zip search (US-only)
+document.getElementById('zip-go-btn').addEventListener('click', () => {
+    const zip = document.getElementById('zip-input').value;
+    goToZip(zip);
+});
+
+document.getElementById('zip-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){
+        e.preventDefault();
+        const zip = document.getElementById('zip-input').value;
+        goToZip(zip);
+    }
+});
+
+    // State Jump controls
+    populateStateDropdown();
+
+    const goBtn = document.getElementById('state-jump-btn');
+    const resetBtn = document.getElementById('state-reset-btn');
+    const sel = document.getElementById('state-jump-select');
+
+    if (goBtn && sel) {
+        goBtn.addEventListener('click', () => {
+            if (!sel.value) {
+                showMessage('Please select a state first.', 'error');
+                return;
+            }
+            jumpToState(sel.value);
+        });
+
+        sel.addEventListener('change', () => {
+            if (sel.value) jumpToState(sel.value);
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (!map) return;
+            map.setView([DEFAULT_VIEW.lat, DEFAULT_VIEW.lng], DEFAULT_VIEW.zoom);
+            showMessage('Map reset to default view.', 'success');
+        });
+    }
 }
 
 async function handleSightingSubmit(e) {
@@ -759,14 +1335,20 @@ async function handleSightingSubmit(e) {
 
     const locationMethod = document.querySelector('input[name="location-method"]:checked').value;
 
-    if (locationMethod === 'map') {
-        if (!selectedLatLng) {
-            showMessage('Please click on the map to select a location first', 'error');
-            return;
-        }
-        formData.latitude = selectedLatLng.lat;
-        formData.longitude = selectedLatLng.lng;
-    } else {
+  if (locationMethod === 'map') {
+    if (!selectedLatLng) {
+        showMessage('Please click on the map to select a location first', 'error');
+        return;
+    }
+    formData.latitude = selectedLatLng.lat;
+    formData.longitude = selectedLatLng.lng;
+
+    // NEW: auto-filled from reverse geocode on map click
+    formData.city = selectedLatLng.city || null;
+    formData.state = selectedLatLng.state || null;
+    formData.zip_code = selectedLatLng.zip_code || null;
+}
+ else {
         const city = document.getElementById('city').value;
         const state = document.getElementById('state').value;
 
@@ -820,7 +1402,6 @@ async function handleSightingSubmit(e) {
         showMessage('Error submitting sighting. Please try again.', 'error');
     }
 }
-
 
 async function handleSubscriptionSubmit(e) {
     e.preventDefault();
@@ -921,19 +1502,44 @@ async function handleMonkeySubmit() {
     const ok = confirmSubmit("Confirm Monkey Submissions", previewLines);
     if (!ok) return;
 
-    const monkeySubmissions = monkeyMarkers.map((marker, index) => ({
-        latitude: marker.monkeyData.lat,
-        longitude: marker.monkeyData.lng,
-        submitter_name: submitterName,
-        submitter_email: submitterEmail,
-        notes: notes,
-        sighting_time: new Date().toISOString(),
-        status: 'pending',
-        monkey_count: monkeyMarkers.length,
-        monkey_direction: marker.monkeyData.direction,
-        monkey_number: index + 1,
-        session_id: sessionId
-    }));
+// Ensure every monkey has city/state before insert (best-effort)
+await Promise.all(monkeyMarkers.map(async (m) => {
+    const md = m.monkeyData || {};
+    const needsLoc = !md.city || !md.state || md.city === '(loading...)' || md.city === '(unknown)';
+    if (!needsLoc) return;
+
+    try {
+        const loc = await reverseGeocodeUS(md.lat, md.lng);
+        md.city = loc.city || null;
+        md.state = loc.state || null;
+        md.zip_code = loc.zip_code || null;
+    } catch (err) {
+        console.error('Pre-submit reverse geocode failed:', err);
+        // Keep nulls if it truly fails; but now you’ll see why in console/network
+        md.city = md.city && md.city !== '(loading...)' ? md.city : null;
+    }
+}));
+
+renderMonkeyList();
+
+const monkeySubmissions = monkeyMarkers.map((marker, index) => ({
+    latitude: marker.monkeyData.lat,
+    longitude: marker.monkeyData.lng,
+    city: (marker.monkeyData.city && marker.monkeyData.city !== '(unknown)') ? marker.monkeyData.city : null,
+    state: marker.monkeyData.state || null,
+    zip_code: marker.monkeyData.zip_code || null,
+    submitter_name: submitterName,
+    submitter_email: submitterEmail,
+    notes: notes,
+    sighting_time: new Date().toISOString(),
+    status: 'pending',
+    monkey_count: monkeyMarkers.length,
+    monkey_direction: marker.monkeyData.direction,
+    monkey_number: index + 1,
+    session_id: sessionId
+}));
+
+
 
     try {
         const { error } = await sb
@@ -954,7 +1560,6 @@ async function handleMonkeySubmit() {
         showMessage('Error submitting monkey sightings. Please try again.', 'error');
     }
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
